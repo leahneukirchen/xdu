@@ -268,7 +268,7 @@ parse_entry(char *name, off_t size)
 	arg = 0; indx = 0;
 	bzero(path,sizeof(path));
 	bzero(buf,sizeof(buf));
-	while (*name != NULL) {
+	while (*name) {
 		if (*name == '/') {
 			buf[indx] = 0;
 			path[arg++] = strdup(buf);
