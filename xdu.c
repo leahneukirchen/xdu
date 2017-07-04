@@ -20,9 +20,11 @@
  * the party supplying this software to the X Consortium.
  */
 #include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "version.h"
-
-extern char *malloc(), *calloc();
 
 #define	MAXDEPTH	80	/* max elements in a path */
 #define	MAXNAME		1024	/* max pathname element length */
@@ -30,15 +32,15 @@ extern char *malloc(), *calloc();
 #define	NCOLS		5	/* default number of columns in display */
 
 /* What we IMPORT from xwin.c */
-extern int xsetup(), xmainloop(), xdrawrect(), xrepaint();
+void xsetup(int *argcp, char **argv);
+void xmainloop(void);
+void xclear(void);
+void xrepaint(void);
+void xdrawrect(char *name, off_t size, int x, int y, int width, int height);
 
-/* What we EXPORT to xwin.c */
-extern int press(), reset(), repaint(), setorder(), reorder();
-extern nodeinfo(), helpinfo();
 int ncols = NCOLS;
 
 /* internal routines */
-char *strdup();
 void addtree();
 void parse_file();
 void parse_entry();
@@ -89,9 +91,7 @@ long nnodes = 0;
  * create a new node with the given name and size info
  */
 struct node *
-makenode(name,size)
-char *name;
-int size;
+makenode (char *name, off_t size)
 {
 	struct	node	*np;
 
@@ -109,9 +109,7 @@ int size;
  * the given x,y point.
  */
 struct node *
-findnode(treep, x, y)
-struct	node *treep;
-int	x, y;
+findnode (struct node *treep, int x, int y)
 {
 	struct	node	*np;
 	struct	node	*np2;
@@ -137,8 +135,7 @@ int	x, y;
  * return a count of the number of children of a given node
  */
 int
-numchildren(nodep)
-struct node *nodep;
+numchildren (struct node *nodep)
 {
 	int	n;
 
@@ -157,9 +154,8 @@ struct node *nodep;
  * 	      had their sizes initialized. [DPT911113]
  *	      * * * This function is recursive * * *
  */
-long
-fix_tree(top)
-struct node *top;
+off_t
+fix_tree (struct node *top)
 {
 	struct node *nd;
 
@@ -228,8 +224,7 @@ char **argv;
 }
 
 void
-parse_file(filename)
-char *filename;
+parse_file(char *filename)
 {
 	char	buf[4096];
 	char	name[4096];
@@ -254,9 +249,7 @@ char *filename;
 
 /* bust up a path string and link it into the tree */
 void
-parse_entry(name,size)
-char *name;
-int size;
+parse_entry(char *name, off_t size)
 {
 	char	*path[MAXDEPTH]; /* break up path into this list */
 	char	buf[MAXNAME];	 /* temp space for path element name */
@@ -304,9 +297,7 @@ int size;
  *	    1 if it should go after.
  */
 int
-compare(n1,n2,order)
-struct node *n1, *n2;
-int order;
+compare(struct node *n1, struct node *n2, int order)
 {
 	int	ret;
 
@@ -347,10 +338,11 @@ int order;
 }
 
 void
-insertchild(nodep,childp,order)
-struct node *nodep;	/* parent */
-struct node *childp;	/* child to be added */
-int order;		/* FIRST, LAST, ALPHA, SIZE */
+insertchild(
+    struct node *nodep,	/* parent */
+    struct node *childp,	/* child to be added */
+    int order		/* FIRST, LAST, ALPHA, SIZE */
+)
 {
 	struct node *np, *np1;
 
@@ -390,10 +382,7 @@ int order;		/* FIRST, LAST, ALPHA, SIZE */
 
 /* add path as a child of top - recursively */
 void
-addtree(top, path, size)
-struct node *top;
-char *path[];
-int size;
+addtree(struct node *top, char *path[], off_t size)
 {
 	struct	node *np;
 
@@ -429,9 +418,7 @@ int size;
 
 /* debug tree print */
 void
-dumptree(np,level)
-struct node *np;
-int level;
+dumptree(struct node *np, int level)
 {
 	int	i;
 	struct	node *subnp;
@@ -446,9 +433,7 @@ int level;
 }
 
 void
-sorttree(np, order)
-struct node *np;
-int order;
+sorttree(struct node *np, int order)
 {
 	struct	node *subnp;
 	struct	node *np0, *np1, *np2, *np3;
@@ -481,13 +466,16 @@ int order;
 	}
 }
 
+void drawchildren(struct node *nodep, struct rect rect);
 /*
  * Draws a node in the given rectangle, and all of its children
  * to the "right" of the given rectangle.
  */
-drawnode(nodep, rect)
-struct node *nodep;	/* node whose children we should draw */
-struct rect rect;	/* rectangle to draw all children in */
+void
+drawnode(
+    struct node *nodep,	/* node whose children we should draw */
+    struct rect rect	/* rectangle to draw all children in */
+)
 {
 	struct rect subrect;
 
@@ -514,9 +502,11 @@ struct rect rect;	/* rectangle to draw all children in */
  * Draws all children of a node within the given rectangle.
  * Recurses on children.
  */
-drawchildren(nodep, rect)
-struct node *nodep;	/* node whose children we should draw */
-struct rect rect;	/* rectangle to draw all children in */
+void
+drawchildren(
+    struct node *nodep,	/* node whose children we should draw */
+    struct rect rect	/* rectangle to draw all children in */
+)
 {
 	int	totalsize;
 	int	totalheight;
@@ -573,8 +563,7 @@ struct rect rect;	/* rectangle to draw all children in */
  * and all of its decendents
  */
 void
-clearrects(nodep)
-struct	node *nodep;
+clearrects(struct node *nodep)
 {
 	struct	node	*np;
 
@@ -592,7 +581,8 @@ struct	node *nodep;
 	}
 }
 
-pwd()
+void
+pwd(void)
 {
 	struct node *np;
 	struct node *stack[MAXDEPTH];
@@ -638,9 +628,8 @@ char *s;
 
 /**************** External Entry Points ****************/
 
-int
-press(x,y)
-int x, y;
+void
+press(int x, int y)
 {
 	struct node *np;
 
@@ -659,8 +648,8 @@ int x, y;
 	}
 }
 
-int
-reset()
+void
+reset(void)
 {
 	topp = &top;
 	if (numchildren(topp) == 1)
@@ -668,9 +657,8 @@ reset()
 	xrepaint();
 }
 
-int
-repaint(width,height)
-int width, height;
+void
+repaint(int width, int height)
 {
 	struct	rect rect;
 
@@ -687,9 +675,8 @@ int width, height;
 #endif
 }
 
-int
-setorder(op)
-char *op;
+void
+setorder(char *op)
 {
 	if (strcmp(op, "size") == 0) {
 		order = ORD_SIZE;
@@ -729,17 +716,18 @@ char *op;
 	}
 }
 
-int
-reorder(op)
-char *op;	/* order name */
+void
+reorder(
+    char *op	/* order name */
+)
 {
 	setorder(op);
 	sorttree(topp, order);
 	xrepaint();
 }
 
-int
-nodeinfo()
+void
+nodeinfo(void)
 {
 	struct node *np;
 
@@ -752,8 +740,8 @@ nodeinfo()
 	}
 }
 
-int
-helpinfo()
+void
+helpinfo(void)
 {
 	fprintf(stdout, "\n\
 XDU Version %s - Keyboard Commands\n\
