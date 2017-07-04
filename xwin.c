@@ -35,26 +35,20 @@
 #endif
 
 /* IMPORTS: routines that this module vectors out to */
-extern int press();
-extern int reset();
-extern int repaint();
-extern int reorder();
-extern int setorder();
-extern int nodeinfo();
-extern int helpinfo();
+int press(int x, int y);
+int reset(void);
+int repaint(int width, int height);
+int setorder(char *op);
+int reorder(char *op);
+int nodeinfo(void);
+int helpinfo(void);
 extern int ncols;
-
-/* EXPORTS: routines that this module exports outside */
-extern int xsetup();
-extern int xmainloop();
-extern int xclear();
-extern int xrepaint();
-extern int xrepaint_noclear();
-extern int xdrawrect();
 
 /* internal routines */
 static void help_popup();
 static void help_popdown();
+void xrepaint(void);
+void xrepaint_noclear(void);
 
 static String fallback_resources[] = {
 "*window.width:		600",
@@ -156,39 +150,27 @@ static char defaultTranslations[] = "\
 
 /*  action routines  */
 
-static void a_quit(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_quit(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	XtDestroyApplicationContext(XtWidgetToApplicationContext(w));
 	exit(0);
 }
 
-static void a_goto(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_goto(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	press(event->xbutton.x, event->xbutton.y);
 }
 
-static void a_reset(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_reset(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	reset();
 }
 
-static void a_reorder(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_reorder(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	if (*num_params != 1) {
 		fprintf(stderr, "xdu: bad number of params to reorder action\n");
@@ -197,11 +179,8 @@ Cardinal *num_params;
 	}
 }
 
-static void a_size(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_size(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	if (res.showsize)
 		res.showsize = 0;
@@ -210,11 +189,8 @@ Cardinal *num_params;
 	xrepaint();
 }
 
-static void a_ncol(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_ncol(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	int	n;
 
@@ -231,74 +207,55 @@ Cardinal *num_params;
 	xrepaint();
 }
 
-static void a_info(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_info(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	nodeinfo();
 }
 
-static void a_help(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_help(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	/*helpinfo();*/
 	help_popup();
 }
 
-static void a_removehelp(w, event, params, num_params)
-Widget w;
-XEvent *event;
-String *params;
-Cardinal *num_params;
+static void
+a_removehelp(Widget w, XEvent *event, String *params, Cardinal *num_params)
 {
 	help_popdown();
 }
 
 /* callback routines */
 
-static void c_resize(w, data, event, continue_to_dispatch)
-Widget w;
-XtPointer data;
-XEvent *event;
-Boolean *continue_to_dispatch;
+static void
+c_resize(Widget w, XtPointer data, XEvent *event, Boolean *continue_to_dispatch)
 {
 	/*printf("Resize\n");*/
 	xrepaint();
 }
 
-static void c_repaint(w, data, event, continue_to_dispatch)
-Widget w;
-XtPointer data;
-XEvent *event;
-Boolean *continue_to_dispatch;
+static void
+c_repaint(Widget w, XtPointer data, XEvent *event, Boolean *continue_to_dispatch)
 {
 	/*printf("Expose\n");*/
 	xrepaint_noclear();
 }
 
 /* X Window related variables */
-static Cursor WorkingCursor;
 static Display *dpy;
 static int screen;
 static Visual *vis;
 static Window win;
 static GC gc;
-static GC cleargc;
 static XtAppContext app_con;
 
 Widget toplevel;
 
 /*  External Functions  */
 
-int
-xsetup(argcp, argv)
-int *argcp;
-char **argv;
+void
+xsetup(int *argcp, char **argv)
 {
 	XtTranslations trans_table;
 	Widget w;
@@ -349,18 +306,21 @@ char **argv;
 	ncols = res.ncol;
 }
 
-xmainloop()
+int
+xmainloop(void)
 {
 	XtAppMainLoop(app_con);
 	return(0);
 }
 
-xclear()
+void
+xclear(void)
 {
 	XClearWindow(dpy, win);
 }
 
-xrepaint()
+void
+xrepaint(void)
 {
 	XWindowAttributes xwa;
 
@@ -369,7 +329,8 @@ xrepaint()
 	repaint(xwa.width, xwa.height);
 }
 
-xrepaint_noclear()
+void
+xrepaint_noclear(void)
 {
 	XWindowAttributes xwa;
 
@@ -377,10 +338,8 @@ xrepaint_noclear()
 	repaint(xwa.width, xwa.height);
 }
 
-xdrawrect(name, size, x, y, width, height)
-char *name;
-int size;
-int x, y, width, height;
+void
+xdrawrect(char *name, off_t size, int x, int y, int width, int height)
 {
 	int	textx, texty;
 	char	label[1024];
@@ -411,7 +370,7 @@ int x, y, width, height;
 static Widget popup;
 
 static void
-help_popup()
+help_popup(void)
 {
 	Widget form, text, src;
 	Arg args[15];
@@ -490,7 +449,7 @@ Mouse Commands\n\
 }
 
 static void
-help_popdown()
+help_popdown(void)
 {
 	XtPopdown(popup);
 }
