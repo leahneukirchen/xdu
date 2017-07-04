@@ -240,7 +240,7 @@ parse_file(char *filename)
 	}
 	while (fgets(buf,sizeof(buf),fp) != NULL) {
 		sscanf(buf, "%jd %4095[^\n]\n", &size, name);
-		printf("%jd %s\n", size, name);
+		/*printf("%jd %s\n", size, name);*/
 		parse_entry(name,(off_t)size);
 	}
 	fclose(fp);
