@@ -608,22 +608,8 @@ pwd(void)
 		if (num != 0)
 			strcat(path,"/");
 	}
-	printf("%s %d (%.2f%%)\n", path, topp->size,
+	printf("%s %jd (%.2f%%)\n", path, (intmax_t)topp->size,
 		100.0*topp->size/rootp->size);
-}
-
-char *
-strdup(s)
-char *s;
-{
-	int	n;
-	char	*cp;
-
-	n = strlen(s);
-	cp = malloc(n+1);
-	strcpy(cp,s);
-
-	return	cp;
 }
 
 /**************** External Entry Points ****************/
