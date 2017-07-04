@@ -76,7 +76,7 @@ struct rect {
  */
 struct node {
 	char	*name;
-	long	size;		/* from here down in the tree */
+	off_t	size;		/* from here down in the tree */
 	long	num;		/* entry number - for resorting */
 	struct	rect rect;	/* last drawn screen rectangle */
 	struct	node *peer;	/* siblings */
@@ -228,7 +228,7 @@ parse_file(char *filename)
 {
 	char	buf[4096];
 	char	name[4096];
-	int	size;
+	intmax_t size;
 	FILE	*fp;
 
 	if (strcmp(filename, "-") == 0) {
@@ -240,9 +240,9 @@ parse_file(char *filename)
 		}
 	}
 	while (fgets(buf,sizeof(buf),fp) != NULL) {
-		sscanf(buf, "%d %s\n", &size, name);
-		/*printf("%d %s\n", size, name);*/
-		parse_entry(name,size);
+		sscanf(buf, "%jd %4095[^\n]\n", &size, name);
+		printf("%jd %s\n", size, name);
+		parse_entry(name,(off_t)size);
 	}
 	fclose(fp);
 }
@@ -426,7 +426,7 @@ dumptree(struct node *np, int level)
 	for (i = 0; i < level; i++)
 		printf("   ");
 
-	printf("%s %d\n", np->name, np->size);
+	printf("%s %jd\n", np->name, (intmax_t)np->size);
 	for (subnp = np->child; subnp != NULL; subnp = subnp->peer) {
 		dumptree(subnp,level+1);
 	}
@@ -508,7 +508,7 @@ drawchildren(
     struct rect rect	/* rectangle to draw all children in */
 )
 {
-	int	totalsize;
+	off_t	totalsize;
 	int	totalheight;
 	struct	node	*np;
 	double	fractsize;
@@ -722,7 +722,7 @@ nodeinfo(void)
 
 	/* display each child of this node */
 	for (np = topp->child; np != NULL; np = np->peer) {
-		printf("%-8d %s\n", np->size, np->name);
+		printf("%-8ld %s\n", np->size, np->name);
 	}
 }
 

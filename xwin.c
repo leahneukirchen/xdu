@@ -29,10 +29,8 @@
 #include <X11/Xaw/Label.h>
 
 #include <stdio.h>
-
-#ifndef X_NOT_STDC_ENV
+#include <stdint.h>
 #include <stdlib.h>	/* for exit() */
-#endif
 
 /* IMPORTS: routines that this module vectors out to */
 int press(int x, int y);
@@ -351,7 +349,7 @@ xdrawrect(char *name, off_t size, int x, int y, int width, int height)
 	XDrawRectangle(dpy, win, gc, x, y, width, height);
 
 	if (res.showsize) {
-		sprintf(label,"%s (%d)", name, size);
+		sprintf(label,"%s (%jd)", name, (intmax_t)size);
 		name = label;
 	}
 
