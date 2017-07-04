@@ -187,9 +187,8 @@ Graphically displays the output of du in an X window\n\
   Toolkit options: -fg, -bg, -rv, -display, -geometry, etc.\n\
 ";
 
-main(argc,argv)
-int argc;
-char **argv;
+int
+main (int argc, char **argv)
 {
 	top.name = strdup("[root]");
 	top.size = -1;
@@ -197,7 +196,7 @@ char **argv;
 	xsetup(&argc,argv);
 	if (argc == 1) {
 		if (isatty(fileno(stdin))) {
-			fprintf(stderr, usage);
+			fprintf(stderr, "%s", usage);
 			exit(1);
 		} else {
 			parse_file("-");
@@ -205,7 +204,7 @@ char **argv;
 	} else if (argc == 2 && strcmp(argv[1],"-help") != 0) {
 		parse_file(argv[1]);
 	} else {
-		fprintf(stderr, usage);
+		fprintf(stderr, "%s", usage);
 		exit(1);
 	}
 	top.size = fix_tree(&top);
