@@ -280,7 +280,7 @@ xsetup(int *argcp, char **argv)
 
 	/* Create the top level Widget */
 	n = 0;
-	XtSetArg(args[n], XtNtitle, "XDU Disk Usage Display ('h' for help)\n"); n++;
+	XtSetArg(args[n], XtNtitle, "XDU Disk Usage Display ('?' for help)"); n++;
 	toplevel = XtAppInitialize(&app_con, "XDu",
 			options, XtNumber(options),
 			argcp, argv,
