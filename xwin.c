@@ -469,6 +469,7 @@ Mouse Commands\n\
 
 	trans_table = XtParseTranslationTable("<Key>Q: RemoveHelp()");
 	XtAugmentTranslations(form, trans_table);
+	XtOverrideTranslations(text, trans_table);
 
 	/* Set up ICCCM delete window */
 	wm_delete_window = XInternAtom(XtDisplay(popup), "WM_DELETE_WINDOW", False);
