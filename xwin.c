@@ -64,6 +64,7 @@ typedef struct {
 	XFontStruct *font;
 	int	ncol;
 	Boolean	showsize;
+	Boolean	human;
 	char	*order;
 } res_data, *res_data_ptr;
 static res_data res;
@@ -79,6 +80,8 @@ static XtResource application_resources[] = {
 		XtOffset(res_data_ptr,ncol), XtRString, "5"},
 	{ "showsize", "ShowSize", XtRBoolean, sizeof(Boolean),
 		XtOffset(res_data_ptr,showsize), XtRString, "True"},
+	{ "human", "Human", XtRBoolean, sizeof(Boolean),
+		XtOffset(res_data_ptr,human), XtRString, "True"},
 	{ "order", "Order", XtRString, sizeof(String),
 		XtOffset(res_data_ptr,order), XtRString, "first"}
 };
@@ -88,6 +91,8 @@ static XrmOptionDescRec options[] = {
 	{"-c",		"*ncol",	XrmoptionSepArg,	NULL},
 	{"+s",		"*showsize",	XrmoptionNoArg,		"True"},
 	{"-s",		"*showsize",	XrmoptionNoArg,		"False"},
+	{"+h",		"*human",	XrmoptionNoArg,		"True"},
+	{"-h",		"*human",	XrmoptionNoArg,		"False"},
 	{"-n",		"*order",	XrmoptionNoArg,		"size"},
 	{"-rn",		"*order",	XrmoptionNoArg,		"rsize"},
 	{"-a",		"*order",	XrmoptionNoArg,		"alpha"},
@@ -100,6 +105,7 @@ static void a_reset();
 static void a_quit();
 static void a_reorder();
 static void a_size();
+static void a_human();
 static void a_ncol();
 static void a_info();
 static void a_help();
@@ -111,6 +117,7 @@ static XtActionsRec actionsTable[] = {
 	{ "quit",	a_quit },
 	{ "reorder",	a_reorder },
 	{ "size",	a_size },
+	{ "human",	a_human },
 	{ "ncol",	a_ncol },
 	{ "info",	a_info },
 	{ "help",	a_help },
@@ -122,8 +129,8 @@ static char defaultTranslations[] = "\
 <Key>Escape: quit()\n\
 :<Key>/: reset()\n\
 <Key>S:	size()\n\
+<Key>H:	human()\n\
 <Key>I:	info()\n\
-<Key>H: help()\n\
 <Key>Help: help()\n\
 :<Key>?: help()\n\
 <Key>A:	reorder(alpha)\n\
@@ -184,6 +191,16 @@ a_size(Widget w, XEvent *event, String *params, Cardinal *num_params)
 		res.showsize = 0;
 	else
 		res.showsize = 1;
+	xrepaint();
+}
+
+static void
+a_human(Widget w, XEvent *event, String *params, Cardinal *num_params)
+{
+	if (res.human)
+		res.human = 0;
+	else
+		res.human = 1;
 	xrepaint();
 }
 
@@ -349,7 +366,19 @@ xdrawrect(char *name, off_t size, int x, int y, int width, int height)
 	XDrawRectangle(dpy, win, gc, x, y, width, height);
 
 	if (res.showsize) {
-		sprintf(label,"%s (%jd)", name, (intmax_t)size);
+		if (res.human) {
+			double d = size;
+			const char *u = "KMGTPEZY";
+
+			while (d >= 1024) {
+				u++;
+				d /= 1024.0;
+			}
+			sprintf(label,"%s (%.1f%c)", name, d, *u);
+		} else {
+			sprintf(label,"%s (%jd)", name, (intmax_t)size);
+		}
+
 		name = label;
 	}
 
@@ -418,9 +447,10 @@ Keyboard Commands\n\
   l  sort last-in-first-out\n\
   r  reverse sort\n\
   s  toggle size display\n\
+  h  toggle human readable sizes\n\
   /  goto the root\n\
   i  node info to standard out\n\
-  h  this help message\n\
+  ?  this help message\n\
   q  quit (also Escape)\n\
 0-9  set number of columns (0=10)\n\
 \n\
